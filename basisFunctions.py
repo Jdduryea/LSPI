@@ -1,5 +1,25 @@
 import numpy as np
 
+
+def get_cartpole_basis_functions_quadratic_v1():
+    '''
+    This one does really well! USE THIS ONE!!
+    Just some simple quadratics
+    '''
+
+    Q1 = np.identity(5)
+    Q2 = np.ones((5,5))
+    Q3 = np.array([[1,1,1,1,-1],[1,1,1,-1,1],[1,1,-1,1,1],[1,-1,1,1,1],[-1,1,1,1,1]])
+
+    v = lambda s,a: np.append(s,a)
+    bf1 = lambda s,a:1
+    bf2 = lambda s,a: np.dot(np.dot(v(s,a),Q1),v(s,a))
+    bf3 = lambda s,a: np.dot(np.dot(v(s,a),Q2),v(s,a))
+    bf4 = lambda s,a: np.dot(np.dot(v(s,a),Q3),v(s,a))
+    
+    bfs = [bf1,bf2, bf3, bf4]
+    return bfs
+
 def get_cartpole_basis_functions_v1():
     bf1 = lambda s,a:a
     bf2 = lambda s,a:s[0]
@@ -15,7 +35,6 @@ def get_cartpole_basis_functions_v2():
     to work well for the simplified (no singularity, starting above the horizon)
     cartpole problem.
     
-    Note: this one seems to work the best so far.
     '''
     s1 = np.array([1,1,1,1])
     s2 = np.array([0,0,0,0])
@@ -100,6 +119,10 @@ def get_cartpole_basis_functions_v4():
     bf9 = lambda s,a: int(a==1)*s[2]
     bf10 = lambda s,a: int(a==1)*s[3]
     return [bf1,bf2,bf3,bf4,bf5, bf6, bf7, bf8, bf8, bf10]
+
+
+def get_mt_car_basis_functions_quadratic_v1():
+    return None
 
     
 def get_continuous_mt_car_basis_functions():
