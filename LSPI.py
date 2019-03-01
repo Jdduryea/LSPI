@@ -23,9 +23,14 @@ def LSPI(basis_functions, gamma, epsilon, w, env, method = "discrete", n_trial_s
     w0 = []
 
     # for mountain car, use 1000 trials with 20 timesteps
+    
     samples = _generate_samples(env, n_trial_samples, n_timestep_samples)
+
     while True:
         w_prev = w
+        # try recollecting samples, doesn't seem to have a big affect
+        #samples = _generate_samples(env, n_trial_samples, n_timestep_samples)
+
         w = _LSTDQ_OPT(samples, basis_functions, gamma, w, env, method = method)
         
         
@@ -175,8 +180,8 @@ def _get_policy_action_discrete(s, w, basis_functions, env):
     a_max = None
     max_score = float("-inf")
     
-#    action_space = [0,1,2] # for cart pole, this is [0,1]
-    action_space = [0,1]
+    action_space = [0,1] # for acrobat
+#    action_space = [0,1] # for cart pole
     # Search action space for most valuable action
  
     #TODO:  use sympy for grad desc
@@ -231,7 +236,7 @@ def _get_policy_actions_continuous(s,w,basis_functions, env):
     For continuous action spaces. Given a parameterization for the policy,
     reconstruct the policy and querery it to get 
     the optimal action for state s. That is,
-    the argmax over actions of ϕ(s,a).w
+    the argmax over actions of (s,a).w
     
     Inputs:
     s: stateget_policy_action

@@ -1,7 +1,16 @@
+'''
+This module just contains a bunch of basis 
+functions that can be used with various problems
+alongside the LSPI algorithm. Make sure the basis
+function lines up with the correct problem you 
+are trying to solve!
+'''
+
 import numpy as np
 
 
-def get_cartpole_basis_functions_quadratic_v1():
+# USE ME FOR CARTPOLE!!
+def get_cartpole_basis_functions_quadratic_v2():
     '''
     This one does really well! USE THIS ONE!!
     Just some simple quadratics
@@ -9,15 +18,56 @@ def get_cartpole_basis_functions_quadratic_v1():
 
     Q1 = np.identity(5)
     Q2 = np.ones((5,5))
-    Q3 = np.array([[1,1,1,1,-1],[1,1,1,-1,1],[1,1,-1,1,1],[1,-1,1,1,1],[-1,1,1,1,1]])
+    #Q3 = np.array([[1,1,1,1,-1],[1,1,1,-1,1],[1,1,-1,1,1],[1,-1,1,1,1],[-1,1,1,1,1]])
+
+    Q3 = Q2 - 2*Q1
+
+    v = lambda s,a: np.append(s,a)
+    bf1 = lambda s,a:1
+    #bf2 = lambda s,a: np.dot(np.dot(v(s,a), Q1), v(s,a))
+    bf3 = lambda s,a: np.dot(np.dot(v(s,a), Q2), v(s,a))
+    bf4 = lambda s,a: np.dot(np.dot(v(s,a), Q3), v(s,a))
+    
+    bfs = [bf1, bf3, bf4]
+    return bfs
+
+
+def get_cartpole_basis_functions_quadratic_v0():
+    Q1 = np.ones((5,5))
+
+    v = lambda s,a: np.append(s,a)
+    bf1 = lambda s,a:1
+    bf2 = lambda s,a: np.dot(np.dot(v(s,a),Q1),v(s,a))
+    
+    bfs = [bf1,bf2]
+    return bfs
+
+def get_cartpole_basis_functions_quadratic_v1():
+    Q1 = np.identity(5)
+    Q2 = np.ones((5,5))
 
     v = lambda s,a: np.append(s,a)
     bf1 = lambda s,a:1
     bf2 = lambda s,a: np.dot(np.dot(v(s,a),Q1),v(s,a))
     bf3 = lambda s,a: np.dot(np.dot(v(s,a),Q2),v(s,a))
-    bf4 = lambda s,a: np.dot(np.dot(v(s,a),Q3),v(s,a))
     
-    bfs = [bf1,bf2, bf3, bf4]
+    bfs = [bf1,bf2, bf3]
+    return bfs
+
+
+
+def get_cartpole_basis_functions_quadratic_v3():
+    '''
+    This one just moves the car to the left
+    '''
+
+    Q1 = np.array([[1,1,1,1,-1],[1,1,1,-1,1],[1,1,-1,1,1],[1,-1,1,1,1],[-1,1,1,1,1]])
+
+    v = lambda s,a: np.append(s,a)
+    bf1 = lambda s,a:1
+    bf2 = lambda s,a: np.dot(np.dot(v(s,a),Q1),v(s,a))
+    
+    bfs = [bf1,bf2]
     return bfs
 
 def get_cartpole_basis_functions_v1():
@@ -122,7 +172,18 @@ def get_cartpole_basis_functions_v4():
 
 
 def get_mt_car_basis_functions_quadratic_v1():
-    return None
+    Q1 = np.identity(3)
+    Q2 = np.ones((3,3))
+    Q3 = np.array([[1,1,-1],[1,-1,1],[-1,1,1]])
+
+    v = lambda s,a: np.append(s,a)
+    bf1 = lambda s,a:1
+    bf2 = lambda s,a: np.dot(np.dot(v(s,a),Q1),v(s,a))
+    bf3 = lambda s,a: np.dot(np.dot(v(s,a),Q2),v(s,a))
+    bf4 = lambda s,a: np.dot(np.dot(v(s,a),Q3),v(s,a))
+    
+    bfs = [bf1,bf2, bf3, bf4]
+    return bfs
 
     
 def get_continuous_mt_car_basis_functions():
@@ -162,18 +223,21 @@ def get_non_linear_mt_car_basis_functions():
     return [bf1,bf2,bf3,bf4,bf5,bf6,bf7,bf8,bf9,bf10]
 
 
-def quadratic(i,j,a_ind,a,s):
-    return int (a == a_ind)*s[i]*s[j]
+def get_acrobat_basis_functions_quadratic_v1():
+    '''
+    This one just moves the car to the left
+    '''
+    Q1 = np.identity(5)
+    Q2 = np.ones((5,5))
+    Q3 = np.array([[1,1,1,1,-1],[1,1,1,-1,1],[1,1,-1,1,1],[1,-1,1,1,1],[-1,1,1,1,1]])
+    v = lambda s,a: np.append(s[-4:],a)
 
-def get_double_pend_features():
+    bf1 = lambda s,a:1
+    bf2 = lambda s,a: np.dot(np.dot(v(s,a),Q1),v(s,a))
+    bf3 = lambda s,a: np.dot(np.dot(v(s,a),Q2),v(s,a))
+    bf4 = lambda s,a: np.dot(np.dot(v(s,a),Q3),v(s,a))
     
-    bfs = []
-    indices = [0,1,2]
-    for a_ind in [0,1,2]:
-        for i in range(3):
-            for j in range(3):
-
-
-                f = lambda s,a,i=i,j=j, a_ind=a_ind: quadratic(i,j,a_ind, a,s)
-                bfs.append(f)
+    bfs = [bf1,bf2, bf3, bf4]
     return bfs
+
+
