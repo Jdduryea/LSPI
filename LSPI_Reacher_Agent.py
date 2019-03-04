@@ -9,6 +9,7 @@ import abc
 
 import gym
 
+
 class RLAgent(object):
     """ Abstract base class for reinforcement learning agents. """
     __metaclass__ = abc.ABCMeta
@@ -63,7 +64,7 @@ class RandomAgent(RLAgent):
 
         return prev_state, action, reward, self.current_state_, done
 
-
+# Good basis functions for the cartpole problem
 def get_best_cartpole_basis_functions():
     '''
     This one does really well! USE THIS ONE!!
@@ -83,6 +84,10 @@ def get_best_cartpole_basis_functions():
     bfs = [bf1, bf2, bf3, bf4]
     return bfs
 
+
+
+
+
 # RL Agent that uses LSPI
 class LSPIAgent(RLAgent):
     '''
@@ -94,8 +99,8 @@ class LSPIAgent(RLAgent):
         self.basis_functions = basis_functions
         self.discount_factor_ = discount_factor
         self.current_state_ = None
-        self.action_bounds = [(-2*np.pi, 2*np.pi),(-2*np.pi, 2*np.pi),(-2*np.pi, 2*np.pi)]
-
+        #self.action_bounds = [(-2*np.pi, 2*np.pi),(-2*np.pi, 2*np.pi),(-2*np.pi, 2*np.pi)]
+        self.action_bounds = [(-1,1)]
         self.reset()
 
     def reset(self):
@@ -151,12 +156,9 @@ class LSPIAgent(RLAgent):
         Outputs:
         action a that the policy says is best
         '''
-        #phi = np.array([bf(s,a) for bf in basis_functions])
-        print("state: " , state)
         f = lambda action: np.dot(self._compute_phi(state, action), self.policy_param)
         x0 = 0
-        # mountain_car_bounds = []
-        result = minimize(f, x0, method='L-BFGS-B', options={ 'disp': True}, bounds=self.action_bounds)
+        result = minimize(f, x0, method='L-BFGS-B', options={ 'disp': False}, bounds=self.action_bounds)
         return result.x
 
     def _generate_samples(self, n_samples, n_steps=100):
@@ -167,15 +169,15 @@ class LSPIAgent(RLAgent):
         :return:
         """
         samples = []
-        print(self.env.reset())
+        print(self.env_.reset())
         for i in range(n_samples):
-            self.env.reset()
+            self.env_.reset()
             for j in range(n_steps):
                 # s = list(env.env.state)
-                s = self.env.env.state
-                a = self.env.action_space.sample()
+                s = self.env_.env.state
+                a = self.env_.action_space.sample()
 
-                sp, r, _, _ = self.env.step(a)
+                sp, r, _, _ = self.env_.step(a)
 
                 sample = (s, a, r, sp)
                 samples.append(sample)
@@ -183,9 +185,12 @@ class LSPIAgent(RLAgent):
         return np.array(samples)
 
     def train(self):
+        gamma = 0.95
+        epsilon = 0.01
+        self.LSPI(gamma,epsilon)
+        pass
 
-    def LSPI(basis_functions, gamma, epsilon, w, env, method="discrete", n_trial_samples=1000,
-             n_timestep_samples=20):
+    def LSPI(self, gamma, epsilon, n_trial_samples=1000, n_timestep_samples=20):
         '''
         Compute the parameters of the policy, w, using the LSPI algorithm.
 
@@ -203,39 +208,21 @@ class LSPIAgent(RLAgent):
 
         # for mountain car, use 1000 trials with 20 timesteps
 
-        samples = self._generate_samples(env, n_trial_samples, n_timestep_samples)
+        samples = self._generate_samples(n_trial_samples, n_timestep_samples)
 
         while True:
-            w_prev = w
+            w_prev = self.policy_param
             # try recollecting samples, doesn't seem to have a big affect
-            # samples = _generate_samples(env, n_trial_samples, n_timestep_samples)
 
-            w = self._LSTDQ_OPT(samples, basis_functions, gamma, w, env, method=method)
+            self.policy_param = self._LSTDQ_OPT(samples, gamma)
 
-            if self._converged(w, w_prev, epsilon):
+            if self._converged(self.policy_param, w_prev, epsilon):
                 break
-            else:
-                w_prev = w
-            w0.append(w[0])
-            print(w[0])
-        return w, w0
+            # else:
+            #     w_prev = w
 
-    def _generate_samples(self, env, n_samples, n_steps=100):
-        samples = []
-        print(env.reset())
-        for i in range(n_samples):
-            env.reset()
-            for j in range(n_steps):
-                # s = list(env.env.state)
-                s = env.env.state
-                a = env.action_space.sample()
-
-                sp, r, _, _ = env.step(a)
-
-                sample = (s, a, r, sp)
-                samples.append(sample)
-
-        return np.array(samples)
+            # sanity check
+            print(self.policy_param[0])
 
     def _converged(self, w, w_prev, epsilon):
         '''
@@ -250,7 +237,26 @@ class LSPIAgent(RLAgent):
         '''
         return np.linalg.norm(w - w_prev) < epsilon
 
-    def _LSTDQ_OPT(self, samples, gamma, w, sigma=0.1, method="discrete"):
+    def _generate_samples(self, n_samples, n_steps=100):
+        samples = []
+
+        for i in range(n_samples):
+            self.env_.reset()
+            for j in range(n_steps):
+                # s = list(env.env.state)
+                s = self.env_.env.state
+                a = self.env_.action_space.sample()
+
+                sp, r, _, _ = self.env_.step(a)
+
+                sample = (s, a, r, sp)
+                samples.append(sample)
+
+        return np.array(samples)
+
+
+
+    def _LSTDQ_OPT(self, samples, gamma, sigma=0.1):
         '''
         A faster version of LSTDQ. Computes an approximation of the policy parameters based
         on the LSTDQ-OPT algorithm presented in the paper.
@@ -265,15 +271,17 @@ class LSPIAgent(RLAgent):
         sigma: small positive float.
         '''
         k = len(self.basis_functions)
-        B = np.identity(k) * float(1 / sigma)
+
+        B = np.identity(k) * (1.0/0.1)
         b = np.zeros(k)
 
         for s, a, r, sp in samples:
-            phi = self._compute_phi(s, a, self.basis_functions)
-            phi_p = self._compute_phi(sp, self._get_policy_action(sp, w, self.basis_functions, self.env, method), self.basis_functions)
+            phi = self._compute_phi(s, a)
+            phi_p = self._compute_phi(sp, self._get_policy_action(sp))
 
             # Some computations that can be reused in the computation
             Bphi = np.dot(B, phi)
+
             phi_t = (phi - gamma * phi_p).T
 
             top = np.dot(np.outer(Bphi, phi_t), B)
@@ -286,12 +294,13 @@ class LSPIAgent(RLAgent):
 
         return w
 #
-# env = gym.make("CartPole-v0")
-# env.reset()
-# bfs = get_best_cartpole_basis_functions()
-# policy_param = np.zeros(len(bfs))
-# agent = LSPIAgent(env, policy_param, bfs)
-# agent.step(0,0)
+env = gym.make("CartPole-v0")
+env.reset()
+bfs = get_best_cartpole_basis_functions()
+policy_param = np.zeros(len(bfs))
+agent = LSPIAgent(env, policy_param, bfs)
+agent.train()
+#agent.step(0,0)
 #
 #
 
