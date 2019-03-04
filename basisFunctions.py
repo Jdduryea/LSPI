@@ -18,17 +18,17 @@ def get_cartpole_basis_functions_quadratic_v2():
 
     Q1 = np.identity(5)
     Q2 = np.ones((5,5))
-    #Q3 = np.array([[1,1,1,1,-1],[1,1,1,-1,1],[1,1,-1,1,1],[1,-1,1,1,1],[-1,1,1,1,1]])
+    Q3 = np.array([[1,1,1,1,-1],[1,1,1,-1,1],[1,1,-1,1,1],[1,-1,1,1,1],[-1,1,1,1,1]])
 
     Q3 = Q2 - 2*Q1
 
     v = lambda s,a: np.append(s,a)
     bf1 = lambda s,a:1
-    #bf2 = lambda s,a: np.dot(np.dot(v(s,a), Q1), v(s,a))
+    bf2 = lambda s,a: np.dot(np.dot(v(s,a), Q1), v(s,a))
     bf3 = lambda s,a: np.dot(np.dot(v(s,a), Q2), v(s,a))
     bf4 = lambda s,a: np.dot(np.dot(v(s,a), Q3), v(s,a))
     
-    bfs = [bf1, bf3, bf4]
+    bfs = [bf1, bf2, bf3, bf4]
     return bfs
 
 

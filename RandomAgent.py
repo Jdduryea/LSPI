@@ -416,7 +416,7 @@ class JacksDDPGAgent(RLAgent):
         # take a random action.
         
         action = np.random.uniform(-self.action_bound,self.action_bound, size=(1,self.action_dim))
-        print "action:",action
+        print ("action:",action)
 
         if not testing:
             # Exploration term
@@ -536,4 +536,4 @@ class JacksDDPGAgent(RLAgent):
     def save(self):
         """ Save the tensorflow graph defining the critic and actor networks. """
         save_path = self.saver_.save(self.sess_, self.save_loc_, global_step=self.save_num)
-        print "Model saved to %s" % save_path
+        print( "Model saved to %s" % save_path)

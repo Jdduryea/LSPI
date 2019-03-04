@@ -137,14 +137,13 @@ def _LSTDQ_OPT(samples, basis_functions, gamma, w, env, sigma=0.1, method = "dis
         
         b = b + phi*r
     
-    w = np.dot(B,b)
-        
-        
+    w = np.dot(B, b)
+
     return w
        
 
 def _compute_phi(s,a, basis_functions):
-    '''
+    """
     Computes the vector ϕ(s,a) according to the basis function ϕ_1...ϕ_k
     
     Inputs:
@@ -154,9 +153,9 @@ def _compute_phi(s,a, basis_functions):
     
     Outputs:
     ϕ(s,a), a vector where each entry is the result of one of the basis functions.
-    '''
+    """
 
-    phi= np.array([bf(s,a) for bf in basis_functions])
+    phi = np.array([bf(s, a) for bf in basis_functions])
     return phi
     
     
@@ -180,7 +179,8 @@ def _get_policy_action_discrete(s, w, basis_functions, env):
     a_max = None
     max_score = float("-inf")
     
-    action_space = [0,1] # for acrobat
+    action_space = [0,1,2] # for acrobat
+    action_space = [0,1,2,3] # for 
 #    action_space = [0,1] # for cart pole
     # Search action space for most valuable action
  
@@ -249,7 +249,6 @@ def _get_policy_actions_continuous(s,w,basis_functions, env):
     '''
     f = lambda a: np.dot(_compute_phi(s, a, basis_functions), w)
     x0 = 0
-    #mountain_car_bounds = []
     result = minimize(f, x0, method='L-BFGS-B', options={'xtol': 1e-8, 'disp': True}, bounds = [(-1,1)])
     return result.x
 
