@@ -166,8 +166,8 @@ class LSPIAgent(RLAgent):
         #     if f(a) < max_score:
         #         amax = a
         #         max_score = f(a)
-        #
-        # #print int((np.round(action[0])))
+
+        #print int((np.round(action[0])))
         # print ("amax:" ,amax)
         # print("result x0:", result.x)
         # print ("-----------------")
@@ -204,7 +204,7 @@ class LSPIAgent(RLAgent):
         self.LSPI(gamma, epsilon)
         pass
 
-    def LSPI(self, gamma, epsilon, n_trial_samples=10000, n_timestep_samples=6):
+    def LSPI(self, gamma, epsilon, n_trial_samples=1000, n_timestep_samples=6):
         '''
         Compute the parameters of the policy, w, using the LSPI algorithm.
 
@@ -318,8 +318,6 @@ print("best params:", agent.policy_param)
 #agent.policy_param = [ 1.99899848e+01 ,-1.65499892e-03  ,1.36777801e-03 , 5.32496602e-04]
 
 env._max_episode_steps = 10000
-method = "discrete"
-#method = "continuous"
 num_steps = []
 for i_episode in range(100):
     observation = env.reset()
@@ -330,18 +328,10 @@ for i_episode in range(100):
     while True:
         t+=1
         #env.render()
-        #action = LSPI.get_policy_action(env.env.state, w_est, bfs, env, method = method)
-        # action = env.action_space.sample()
-        # if method == "continuous":
-        #     action = [action[0]]
 
-        #prev_state, action, reward, new_state, done = agent.step(0, 0)
-        action = agent._get_policy_action(env.env.state)
+        prev_state, action, reward, new_state, done = agent.step(0, 0)
         action = int((np.round(action[0])))
-        observation, reward, done, info = env.step(action)
 
-        #print(action)
-        #print observation
         if done:
             print ("reward:", reward)
             num_steps.append(t)
