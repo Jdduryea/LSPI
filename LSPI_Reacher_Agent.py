@@ -100,7 +100,7 @@ class LSPIAgent(RLAgent):
         self.discount_factor_ = discount_factor
         self.current_state_ = None
         #self.action_bounds = [(-2*np.pi, 2*np.pi),(-2*np.pi, 2*np.pi),(-2*np.pi, 2*np.pi)]
-        self.action_bounds = [(-1,1)]
+        self.action_bounds = [(0, 1)]
         self.reset()
 
     def reset(self):
@@ -119,7 +119,7 @@ class LSPIAgent(RLAgent):
         :return: (state, action, reward, next state, done)
         """
         prev_state = self.current_state_
-        action = self._get_policy_actions_continuous(prev_state)
+        action = self._get_policy_action(prev_state)
 
         self.current_state_, reward, done, _ = self.env_.step(int(action))
         return prev_state, action, reward, self.current_state_, done
@@ -156,10 +156,24 @@ class LSPIAgent(RLAgent):
         Outputs:
         action a that the policy says is best
         '''
-        f = lambda action: np.dot(self._compute_phi(state, action), self.policy_param)
-        x0 = 0
-        result = minimize(f, x0, method='L-BFGS-B', options={ 'disp': False}, bounds=self.action_bounds)
+        f = lambda action: -1*np.dot(self._compute_phi(state, action), self.policy_param)
+        x0 = 1
+        result = minimize(f, x0, method='L-BFGS-B', options={'xtol': 1e-8, 'disp': False}, bounds=self.action_bounds)
         return result.x
+        # amax = None
+        # max_score = 1*float("inf")
+        # for a in [0,1]:
+        #     if f(a) < max_score:
+        #         amax = a
+        #         max_score = f(a)
+        #
+        # #print int((np.round(action[0])))
+        # print ("amax:" ,amax)
+        # print("result x0:", result.x)
+        # print ("-----------------")
+        # return amax
+
+
 
     def _generate_samples(self, n_samples, n_steps=100):
         """
@@ -187,10 +201,10 @@ class LSPIAgent(RLAgent):
     def train(self):
         gamma = 0.95
         epsilon = 0.01
-        self.LSPI(gamma,epsilon)
+        self.LSPI(gamma, epsilon)
         pass
 
-    def LSPI(self, gamma, epsilon, n_trial_samples=1000, n_timestep_samples=20):
+    def LSPI(self, gamma, epsilon, n_trial_samples=10000, n_timestep_samples=6):
         '''
         Compute the parameters of the policy, w, using the LSPI algorithm.
 
@@ -204,22 +218,19 @@ class LSPIAgent(RLAgent):
         Outputs:
         w: the converged policy paramters
         '''
-        w0 = []
-
-        # for mountain car, use 1000 trials with 20 timesteps
 
         samples = self._generate_samples(n_trial_samples, n_timestep_samples)
 
-        while True:
+        for i in range(5):
+        #while True:
             w_prev = self.policy_param
-            # try recollecting samples, doesn't seem to have a big affect
 
             self.policy_param = self._LSTDQ_OPT(samples, gamma)
-
+            print(self.policy_param)
             if self._converged(self.policy_param, w_prev, epsilon):
                 break
-            # else:
-            #     w_prev = w
+            #else:
+             #   w_prev = w
 
             # sanity check
             print(self.policy_param[0])
@@ -272,7 +283,9 @@ class LSPIAgent(RLAgent):
         '''
         k = len(self.basis_functions)
 
-        B = np.identity(k) * (1.0/0.1)
+
+        #B = np.identity(k) * (1.0/0.1)
+        B = np.identity(k) * float(1/sigma)
         b = np.zeros(k)
 
         for s, a, r, sp in samples:
@@ -299,8 +312,38 @@ env.reset()
 bfs = get_best_cartpole_basis_functions()
 policy_param = np.zeros(len(bfs))
 agent = LSPIAgent(env, policy_param, bfs)
-agent.train()
-#agent.step(0,0)
-#
-#
 
+agent.train()
+print("best params:", agent.policy_param)
+#agent.policy_param = [ 1.99899848e+01 ,-1.65499892e-03  ,1.36777801e-03 , 5.32496602e-04]
+
+env._max_episode_steps = 10000
+method = "discrete"
+#method = "continuous"
+num_steps = []
+for i_episode in range(100):
+    observation = env.reset()
+    agent.reset()
+    print ("--------")
+    t = 0
+    actions = []
+    while True:
+        t+=1
+        #env.render()
+        #action = LSPI.get_policy_action(env.env.state, w_est, bfs, env, method = method)
+        # action = env.action_space.sample()
+        # if method == "continuous":
+        #     action = [action[0]]
+
+        #prev_state, action, reward, new_state, done = agent.step(0, 0)
+        action = agent._get_policy_action(env.env.state)
+        action = int((np.round(action[0])))
+        observation, reward, done, info = env.step(action)
+
+        #print(action)
+        #print observation
+        if done:
+            print ("reward:", reward)
+            num_steps.append(t)
+            print("Episode finished after {} timesteps".format(t+1))
+            break

@@ -20,7 +20,6 @@ def get_cartpole_basis_functions_quadratic_v2():
     Q2 = np.ones((5,5))
     Q3 = np.array([[1,1,1,1,-1],[1,1,1,-1,1],[1,1,-1,1,1],[1,-1,1,1,1],[-1,1,1,1,1]])
 
-    Q3 = Q2 - 2*Q1
 
     v = lambda s,a: np.append(s,a)
     bf1 = lambda s,a:1

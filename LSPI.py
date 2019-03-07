@@ -31,7 +31,7 @@ def LSPI(basis_functions, gamma, epsilon, w, env, method = "discrete", n_trial_s
         # try recollecting samples, doesn't seem to have a big affect
         #samples = _generate_samples(env, n_trial_samples, n_timestep_samples)
 
-        w = _LSTDQ_OPT(samples, basis_functions, gamma, w, env, method = method)
+        w = _LSTDQ_OPT(samples, basis_functions, gamma, w, env, method=method)
         
         
         if _converged(w, w_prev, epsilon):
@@ -123,12 +123,12 @@ def _LSTDQ_OPT(samples, basis_functions, gamma, w, env, sigma=0.1, method = "dis
     b = np.zeros(k)
     
     for s, a, r, sp in samples:
-        phi = _compute_phi(s,a, basis_functions)
+        phi = _compute_phi(s, a, basis_functions)
         phi_p = _compute_phi(sp, get_policy_action(sp, w, basis_functions, env, method), basis_functions)
 
         # Some computations that can be reused in the computation
         Bphi = np.dot(B, phi)
-        phi_t =  (phi - gamma*phi_p).T
+        phi_t = (phi - gamma*phi_p).T
         
 
         top = np.dot(np.outer(Bphi, phi_t), B)
@@ -142,7 +142,7 @@ def _LSTDQ_OPT(samples, basis_functions, gamma, w, env, sigma=0.1, method = "dis
     return w
        
 
-def _compute_phi(s,a, basis_functions):
+def _compute_phi(s, a, basis_functions):
     """
     Computes the vector ϕ(s,a) according to the basis function ϕ_1...ϕ_k
     
@@ -179,14 +179,14 @@ def _get_policy_action_discrete(s, w, basis_functions, env):
     a_max = None
     max_score = float("-inf")
     
-    action_space = [0,1,2] # for acrobat
-    action_space = [0,1,2,3] # for 
-#    action_space = [0,1] # for cart pole
+    #action_space = [0,1,2] # for acrobat
+    #action_space = [0,1,2,3] # for
+    action_space = [0, 1] # for cart pole
     # Search action space for most valuable action
  
     #TODO:  use sympy for grad desc
     for a in action_space:
-        score = np.dot(_compute_phi(s,a, basis_functions), w)
+        score = np.dot(_compute_phi(s, a, basis_functions), w)
         # update if we found something better
         if score > max_score:
             max_score = score
