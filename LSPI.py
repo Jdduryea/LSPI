@@ -43,7 +43,7 @@ def LSPI(basis_functions, gamma, epsilon, w, env, method = "discrete", n_trial_s
     return w, w0
 
 
-def get_policy_action(s,w, basis_functions, env, method = "discrete"):
+def get_policy_action(s,w, basis_functions, env, method="discrete"):
     '''
     Computes the best action for the current parameterized policy 
     according to the provided method (discrete, continuous, or continuous-discretized)

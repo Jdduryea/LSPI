@@ -84,7 +84,24 @@ def get_best_cartpole_basis_functions():
     bfs = [bf1, bf2, bf3, bf4]
     return bfs
 
+def get_basis_functions():
+    '''
+    Just some simple quadratics
+    '''
 
+    Q1 = np.identity(15)
+    Q2 = np.ones((15, 15))
+    #Q3 = np.array([[1, 1, 1, 1, -1], [1, 1, 1, -1, 1], [1, 1, -1, 1, 1], [1, -1, 1, 1, 1], [-1, 1, 1, 1, 1]])
+
+    v = lambda s, a: np.append(s, a)
+    bf1 = lambda s, a: 1
+    bf2 = lambda s, a: np.dot(np.dot(v(s, a), Q1), v(s, a))
+    bf3 = lambda s, a: np.dot(np.dot(v(s, a), Q2), v(s, a))
+    #bf4 = lambda s, a: np.dot(np.dot(v(s, a), Q3), v(s, a))
+
+    bfs = [bf1, bf2, bf3]
+    #bfs = [bf1, bf2, bf3, bf4]
+    return bfs
 
 
 
@@ -120,7 +137,7 @@ class LSPIAgent(RLAgent):
         """
         prev_state = self.current_state_
         action = self._get_policy_action(prev_state)
-
+        action = [action]
         self.current_state_, reward, done, _ = self.env_.step(int(action))
         return prev_state, action, reward, self.current_state_, done
 
@@ -156,10 +173,12 @@ class LSPIAgent(RLAgent):
         Outputs:
         action a that the policy says is best
         '''
+
+        # TODO: we're gonna need a better optimizer for the continuous case
         f = lambda action: -1*np.dot(self._compute_phi(state, action), self.policy_param)
-        x0 = 1
+        x0 = np.zeros(shape=len(self.action_bounds))
         result = minimize(f, x0, method='L-BFGS-B', options={'xtol': 1e-8, 'disp': False}, bounds=self.action_bounds)
-        return result.x
+        #
         # amax = None
         # max_score = 1*float("inf")
         # for a in [0,1]:
@@ -167,11 +186,12 @@ class LSPIAgent(RLAgent):
         #         amax = a
         #         max_score = f(a)
 
-        #print int((np.round(action[0])))
-        # print ("amax:" ,amax)
-        # print("result x0:", result.x)
-        # print ("-----------------")
-        # return amax
+        # #print int((np.round(action[0])))
+        #print ("amax:" ,amax)
+        #print("result x0:", result.x)
+        #print ("-----------------")
+        return result.x
+        #return amax
 
 
 
@@ -183,15 +203,18 @@ class LSPIAgent(RLAgent):
         :return:
         """
         samples = []
-        print(self.env_.reset())
+        #print(self.env_.reset())
         for i in range(n_samples):
-            self.env_.reset()
+            #self.env_.reset()
+            self.reset()
             for j in range(n_steps):
                 # s = list(env.env.state)
-                s = self.env_.env.state
+                #s = self.env_.env.state
+                s = self.current_state_
                 a = self.env_.action_space.sample()
 
                 sp, r, _, _ = self.env_.step(a)
+
 
                 sample = (s, a, r, sp)
                 samples.append(sample)
@@ -221,19 +244,14 @@ class LSPIAgent(RLAgent):
 
         samples = self._generate_samples(n_trial_samples, n_timestep_samples)
 
-        for i in range(5):
-        #while True:
+        while True:
             w_prev = self.policy_param
-
-            self.policy_param = self._LSTDQ_OPT(samples, gamma)
             print(self.policy_param)
+            self.policy_param = self._LSTDQ_OPT(samples,  gamma, )
+
             if self._converged(self.policy_param, w_prev, epsilon):
                 break
-            #else:
-             #   w_prev = w
 
-            # sanity check
-            print(self.policy_param[0])
 
     def _converged(self, w, w_prev, epsilon):
         '''
@@ -309,13 +327,13 @@ class LSPIAgent(RLAgent):
 #
 env = gym.make("CartPole-v0")
 env.reset()
-bfs = get_best_cartpole_basis_functions()
-policy_param = np.zeros(len(bfs))
+bfs = get_basis_functions()
+policy_param = np.zeros(len(bfs)) + 0.0001
 agent = LSPIAgent(env, policy_param, bfs)
 
 agent.train()
 print("best params:", agent.policy_param)
-#agent.policy_param = [ 1.99899848e+01 ,-1.65499892e-03  ,1.36777801e-03 , 5.32496602e-04]
+
 
 env._max_episode_steps = 10000
 num_steps = []
@@ -331,7 +349,7 @@ for i_episode in range(100):
 
         prev_state, action, reward, new_state, done = agent.step(0, 0)
         action = int((np.round(action[0])))
-
+        #print(action)
         if done:
             print ("reward:", reward)
             num_steps.append(t)
